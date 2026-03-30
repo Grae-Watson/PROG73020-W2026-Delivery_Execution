@@ -1,0 +1,8 @@
+{
+    "host": "143.198.35.133",
+    "dbname": "farmforkdb",
+    "user": "delivery",
+    "password": "doordash",
+    "port": 5432,
+    "connect_timeout": 5
+}
