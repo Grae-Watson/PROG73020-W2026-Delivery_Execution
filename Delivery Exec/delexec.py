@@ -4,6 +4,7 @@ from psycopg2.extras import RealDictCursor
 import json
 import requests
 from datetime import datetime, timezone
+import paramiko
 
 app = Flask(__name__)
 
@@ -16,6 +17,22 @@ ODS_HEADERS = {
     "X-API-Key": "kMJIoWBGA_A5xNOLH86NRc2yha_4N8n5u-r_zAmB6BZvDssj",
     "Content-Type": "application/json"
 }
+
+ssh = paramiko.SSHClient();
+try:
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy()) 
+    ssh.connect("68.183.203.17", 22, "sec1", "t&thmGV26cffZ@XoBrt0");
+    stfp = ssh.open_sftp();
+    try:
+        stfp.get("/primary/CFP-Cambridge.csv", "C:/Users/Kirby/Downloads/Delivery Exec/CFP-Cambridge.csv");
+    except FileNotFoundError as err:
+        print("File not found on server");
+    
+    stfp.close();
+finally:
+    ssh.close();
+
+
 
 ALLOWED_CITIES = {"Waterloo", "Kitchener", "Cambridge"}
 SERVICE_NAME = "delivery-exec"
