@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f7f7f7;
+        }
+        h1 {
+            color: #2f6b2f;
+        }
+        .card {
+            background: white;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: #2f6b2f;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Delivery Execution Dashboard</h1>
+    <a class="btn" href="/">Back to Home</a>
+
+    {% for delivery in deliveries %}
+    <div class="card">
+        <h3>{{ delivery.order_id }}</h3>
+        <p><strong>Customer:</strong> {{ delivery.customer_name }}</p>
+        <p><strong>Address:</strong> {{ delivery.address }}</p>
+        <p><strong>Status:</strong> {{ delivery.status }}</p>
+        <p><strong>ETA:</strong> {{ delivery.eta }}</p>
+        <p><strong>Driver:</strong> {{ delivery.driver }}</p>
+        <a class="btn" href="/delivery/{{ delivery.order_id }}">View Details</a>
+    </div>
+    {% endfor %}
+</body>
+</html>

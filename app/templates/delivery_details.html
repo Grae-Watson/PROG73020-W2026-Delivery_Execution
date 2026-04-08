@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f7f7f7;
+        }
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 12px;
+            background-color: #2f6b2f;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Delivery Details</h1>
+
+        <p><strong>Order ID:</strong> {{ delivery.order_id }}</p>
+        <p><strong>Customer:</strong> {{ delivery.customer_name }}</p>
+        <p><strong>Address:</strong> {{ delivery.address }}</p>
+        <p><strong>Status:</strong> {{ delivery.status }}</p>
+        <p><strong>ETA:</strong> {{ delivery.eta }}</p>
+        <p><strong>Driver:</strong> {{ delivery.driver }}</p>
+        <p><strong>Items:</strong></p>
+        <ul>
+            {% for item in delivery["items"] %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+
+        <a class="btn" href="/delivery">Back to Dashboard</a>
+        <a class="btn" href="/">Back to Home</a>
+    </div>
+</body>
+</html>
