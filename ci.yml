@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  Lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +29,7 @@ jobs:
         run: |
           flake8 src tests --max-line-length=100
 
-  unit_tests:
+  Tests:
     needs: [lint]
     runs-on: ubuntu-latest
 
@@ -51,38 +51,10 @@ jobs:
         run: |
           pytest tests/unit -v
           
-  integration_tests: 
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
+      - name: Run integration tests
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run acceptance tests
-        run: |
-          pytest tests/acceptance -v
-
-  acceptance_tests: 
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
+          pytest tests/integration -v
+          
       - name: Run acceptance tests
         run: |
           pytest tests/acceptance -v
