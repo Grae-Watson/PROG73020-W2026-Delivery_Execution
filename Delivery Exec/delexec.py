@@ -53,6 +53,12 @@ def fetch_secret():
             cur.execute(query)
             return cur.fetchall()
 
+def fetch_aggs():
+    query = "SELECT * FROM delexec"
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query)
+            return cur.fetchall()
 
 def utc_now_iso():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -154,6 +160,68 @@ def validate_order_payload(data):
 
     return None, None, None
 
+def validate_order_aggregates(data):
+    clientid = data.get("client_id")
+    if not isinstance(clientid, str) or not clientid.strip():
+        return (
+            "INVALID_PAYLOAD",
+            "client id must be a non-empty string",
+            {"field": "client id"}
+        )
+    produce = data.get("produce")
+    if not isinstance(produce, str) or not produce.strip():
+        return (
+            "INVALID_PAYLOAD",
+            "produce must be a non-empty string",
+            {"field": "produce"}
+        )
+    meat = data.get("meat")
+    if not isinstance(meat, str) or not meat.strip():
+        return (
+            "INVALID_PAYLOAD",
+            "meat must be a non-empty string",
+            {"field": "meat"}
+        )
+    diary = data.get("diary")
+    if not isinstance(diary, str) or not diary.strip():
+        return (
+            "INVALID_PAYLOAD",
+            "diary must be a non-empty string",
+            {"field": "diary"}
+        )
+    
+def send_aggregates_to_customers_subs():
+    #get clientid, produce, meat, and diary from DB
+    try:
+        rows = fetch_aggs()
+        if not rows:
+            #return jsonify({"Error": None})
+            return error_response(
+            500,
+            "DATABASE_ERROR",
+            "Failed to fetch aggs from database",
+            {"details": str(ex)}
+            )
+        return jsonify({
+            "clientid": rows[0]["clientid"],
+            "produce": rows[0]["produce"],
+            "meat": rows[0]["meat"],
+            "diary": rows[0]["diary"]
+            })
+    except Exception as ex:
+        return error_response(
+            500,
+            "DATABASE_ERROR",
+            "Failed to fetch aggs from database",
+            {"details": str(ex)}
+        )
+
+
+    
+
+
+
+
 
 def normalize_order_for_ods(data):
     destination = data["destination"]
@@ -218,6 +286,13 @@ def get_secret():
             {"details": str(ex)}
         )
 
+@app.route("/order/aggregates", methods=["POST"])
+def aggregates():
+    data = request.get_json(silent=True)
+    code, message, details = validate_order_aggregates(data)
+    if code is not None:
+        return error_response(400, code, message, details)
+    #send clientid, produce, meat, and diary to DB
 
 @app.route("/order", methods=["POST"])
 def create_order():
