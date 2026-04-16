@@ -5,6 +5,7 @@ import json
 import requests
 from datetime import datetime, timezone
 import paramiko
+import time
 
 app = Flask(__name__)
 
@@ -17,6 +18,9 @@ ODS_HEADERS = {
     "X-API-Key": "kMJIoWBGA_A5xNOLH86NRc2yha_4N8n5u-r_zAmB6BZvDssj",
     "Content-Type": "application/json"
 }
+
+CS_URL = "/api/v1/update-delivery"
+
 
 ssh = paramiko.SSHClient();
 try:
@@ -38,6 +42,12 @@ ALLOWED_CITIES = {"Waterloo", "Kitchener", "Cambridge"}
 SERVICE_NAME = "delivery-exec"
 SERVICE_VERSION = "1.0.0"
 
+
+class CSpayload:
+    string clientid
+    string produce
+    string meat
+    string dairy
 
 def get_connection():
     return psycopg2.connect(
@@ -160,7 +170,7 @@ def validate_order_payload(data):
 
     return None, None, None
 
-def validate_order_aggregates(data):
+def validate_order_aggregates(data, payload):
     clientid = data.get("client_id")
     if not isinstance(clientid, str) or not clientid.strip():
         return (
@@ -182,16 +192,33 @@ def validate_order_aggregates(data):
             "meat must be a non-empty string",
             {"field": "meat"}
         )
-    diary = data.get("diary")
-    if not isinstance(diary, str) or not diary.strip():
+    dairy = data.get("dairy")
+    if not isinstance(dairy, str) or not dairy.strip():
         return (
             "INVALID_PAYLOAD",
-            "diary must be a non-empty string",
-            {"field": "diary"}
+            "dairy must be a non-empty string",
+            {"field": "dairy"}
         )
+    payload.clientid = client_id
+    payload.produce = produce
+    payload.meat = meat
+    payload.dairy = dairy
+
     
-def send_aggregates_to_customers_subs():
-    #get clientid, produce, meat, and diary from DB
+def send_aggregates_to_customers_subs(payload):
+    
+    requests.post(
+        CS_URL,
+        #headers=ODS_HEADERS,
+        json= jsonify({
+            "client_id": payload.clientid,
+            "produce": payload.produce,
+            "meat" : payload.meat,
+            "dairy" : payload.dairy})
+        timeout=10
+     )
+
+    """
     try:
         rows = fetch_aggs()
         if not rows:
@@ -206,7 +233,7 @@ def send_aggregates_to_customers_subs():
             "clientid": rows[0]["clientid"],
             "produce": rows[0]["produce"],
             "meat": rows[0]["meat"],
-            "diary": rows[0]["diary"]
+            "dairy": rows[0]["dairy"]
             })
     except Exception as ex:
         return error_response(
@@ -215,13 +242,7 @@ def send_aggregates_to_customers_subs():
             "Failed to fetch aggs from database",
             {"details": str(ex)}
         )
-
-
-    
-
-
-
-
+    """
 
 def normalize_order_for_ods(data):
     destination = data["destination"]
@@ -245,6 +266,19 @@ def normalize_order_for_ods(data):
 
     return normalized
 
+def monitor_ODS(payload):
+    
+    string status = "none"
+    while status != "DELIVERY_COMPLETED":
+        time.sleep(5)
+        response = requests.get(
+            f"{ODS_ORDERS_URL}/{order_id}",
+            headers=ODS_HEADERS,
+            timeout=10
+        )
+        status = response.get("status")
+    #if order is complete
+    send_aggregates_to_customers_subs(payload)
 
 @app.route("/", methods=["GET"])
 def index():
@@ -289,10 +323,13 @@ def get_secret():
 @app.route("/order/aggregates", methods=["POST"])
 def aggregates():
     data = request.get_json(silent=True)
-    code, message, details = validate_order_aggregates(data)
+    payload = CSpayload()
+    code, message, details = validate_order_aggregates(data, payload)
     if code is not None:
         return error_response(400, code, message, details)
-    #send clientid, produce, meat, and diary to DB
+    monitor_ODS(payload)
+    del payload
+    
 
 @app.route("/order", methods=["POST"])
 def create_order():
